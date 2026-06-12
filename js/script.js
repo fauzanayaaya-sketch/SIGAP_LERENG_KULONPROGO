@@ -15,20 +15,20 @@ const DATA = {
 const COLOR = {
   rawan: {
     "Sangat Aman": "#1a9850",
-    "Aman":        "#91cf60",
+    "Aman":      "#91cf60",
     "Sedang":      "#fee08b",
-    "Rawan":       "#fc8d59",
+    "Rawan":  "#fc8d59",
     "Sangat Rawan":"#d73027",
   },
   dampak: {
     "Sangat Rendah": "#2c7fb8",
-  "Rendah":"#7fcdbb",
+    "Rendah":"#7fcdbb",
     "Sedang":        "#fdae61",
     "Tinggi":        "#f46d43",
     "Sangat Tinggi": "#a50026",
   },
   reko: { "Baik": "#16a34a", "Cukup": "#eab308" },
-  batas: "#c084fc",
+  batas: "#ef4444",
   evac: "#38bdf8",
   route: "#f97316",
 };
@@ -166,7 +166,16 @@ function evacMarker(f, latlng) {
  * 3. POPUP & INTERAKSI
  * ===================================================================== */
 const row = (l, v) => `<div class="popup-row"><span>${l}</span><span>${v}</span></div>`;
-const badge = (t, c) => `<span class="badge" style="background:${c}">${t}</span>`;
+const badge = (t, c) => {
+  // teks adaptif: gelap di atas abu terang, terang di atas abu gelap
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(c).trim());
+  let fg = "#111111";
+  if (m) {
+    const lum = 0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16);
+    fg = lum < 140 ? "#f5f5f5" : "#111111";
+  }
+  return `<span class="badge" style="background:${c};color:${fg}">${t}</span>`;
+};
 
 function popupHTML(kind, p) {
   if (kind === "zona") {
@@ -362,13 +371,14 @@ function buildLayerControl() {
     if (!layers[m.key]) return;
     const row = document.createElement("label");
     row.className = "layer-item";
-    row.innerHTML =
+  row.innerHTML =
    `<input type="checkbox" checked />` +
-  `<span class="sw" style="background:${m.sw}"></span>` +
-      `<span class="nm">${m.name}</span>`;
+  `<span class="sw on"></span>` +
+ `<span class="nm">${m.name}</span>`;
+    const sw = row.querySelector(".sw");
     row.querySelector("input").addEventListener("change", (e) => {
-      if (e.target.checked) layers[m.key].addTo(map);
-      else map.removeLayer(layers[m.key]);
+      if (e.target.checked) { layers[m.key].addTo(map); sw.classList.add("on"); }
+      else { map.removeLayer(layers[m.key]); sw.classList.remove("on"); }
     });
     box.appendChild(row);
   });
@@ -602,7 +612,44 @@ function initUI() {
   // Tampilan peta
   $("#btnResetView").addEventListener("click", () => map.flyTo(CENTER, 11, { duration: 0.8 }));
   $("#btnFitData").addEventListener("click", fitData);
-  $("#basemapSelect").addEventListener("change", (e) => switchBasemap(e.target.value));
+  // Custom basemap dropdown
+  const bsDropdown = $("#basemapDropdown");
+  const bsTrigger  = $("#basemapTrigger");
+  const bsMenu     = $("#basemapMenu");
+  const bsLabel    = $("#basemapLabel");
+
+  bsTrigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = bsDropdown.classList.toggle("open");
+    bsMenu.hidden = !isOpen;
+  });
+
+  bsMenu.querySelectorAll("li").forEach((li) => {
+    li.addEventListener("click", () => {
+      // update selected state
+      bsMenu.querySelectorAll("li").forEach((x) => x.classList.remove("selected"));
+      li.classList.add("selected");
+      // update trigger label + icon
+      bsLabel.textContent = li.textContent;
+      bsTrigger.querySelector(".basemap-icon").textContent = li.dataset.icon;
+      // switch basemap
+      switchBasemap(li.dataset.value);
+      // close
+      bsMenu.hidden = true;
+      bsDropdown.classList.remove("open");
+    });
+  });
+
+  // Set initial selected state
+  bsMenu.querySelector("li[data-value='dark']").classList.add("selected");
+
+  // Close on outside click
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#basemapDropdown")) {
+      bsMenu.hidden = true;
+      bsDropdown.classList.remove("open");
+    }
+  });
 
   // Lipat sidebar
   $("#btnToggleSidebar").addEventListener("click", () => {
