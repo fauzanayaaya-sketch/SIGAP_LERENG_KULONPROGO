@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIGAP Lereng — WebGIS Kerawanan Longsor Kulon Progo</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- ============ HEADER ============ -->
+    <header class="app-header">
+      <div class="identity">
+        <div class="identity-mark">
+     <span>SL</span>
+     <span class="ping"></span>
+        </div>
+        <div>
+     <h1>SIGAP Lereng</h1>
+          <p>WebGIS Kerawanan Longsor</p>
+      </div>
+      </div>
+
+      <nav class="view-switch">
+    <button class="view-btn active" data-view="homeView">Beranda</button>
+      <button class="view-btn" data-view="mapView">Peta</button>
+      </nav>
+
+      <div class="header-actions">
+        <button id="btnHeaderLocate" class="ghost-btn">Deteksi Lokasi</button>
+<button class="primary-btn small" data-view-jump="mapView">Buka Peta</button>
+  </div>
+    </header>
+
+    <!-- ============ HOME VIEW ============ -->
+    <section id="homeView" class="screen screen-home active">
+   <div class="home-grid">
+
+        <article class="home-copy kulon-copy">
+<div class="status-pill">
+          <i></i> Fokus kajian: kawasan perbukitan Menoreh
+  </div>
+          <h2>Pemetaan Kerawanan Longsor <span>Kulon Progo</span></h2>
+   <p>
+       Sistem ini disusun untuk membantu identifikasi zona rawan longsor,
+            sebaran pemukiman terdampak, serta titik evakuasi terdekat di
+ Kabupaten Kulon Progo, Daerah Istimewa Yogyakarta.
+ </p>
+
+          <div class="focus-list">
+<div><b>Girimulyo</b><span>Topografi curam, kepadatan retakan tinggi.</span></div>
+  <div><b>Samigaluh</b><span>Lereng atas Menoreh, curah hujan tinggi.</span></div>
+    <div><b>Kalibawang</b><span>Pemukiman di kaki lereng sepanjang sungai.</span></div>
+          </div>
+
+    <div class="home-actions">
+            <button class="primary-btn" data-view-jump="mapView">Mulai Eksplorasi Peta</button>
+   <button id="btnHomeSearchSample" class="ghost-btn">Cari Titik Evakuasi</button>
+          </div>
+        </article>
+
+        <aside class="overview-card kulon-overview">
+          <div class="overview-top">
+            <div>
+    <span class="mini-label">Ringkasan Wilayah</span>
+        <h3>Kabupaten Kulon Progo</h3>
+       </div>
+       <div class="live-dot" title="Data aktif"></div>
+          </div>
+
+    <div class="hazard-image-card">
+       <img src="assets/kerawanan_kulonprogo.png" alt="Peta kerawanan Kulon Progo" />
+            <div class="image-caption">
+   <b>Peta Indeks Kerawanan</b>
+         <span>Sumber: data spasial olahan</span>
+    </div>
+  </div>
+
+        <div class="priority-card">
+    <span class="mini-label">Kecamatan Prioritas</span>
+   <div class="priority-tags"><b>Girimulyo</b><b>Samigaluh</b><b>Kalibawang</b></div>
+            <p>Penanganan diarahkan pada zona sangat rawan dan pemukiman dampak tinggi.</p>
+          </div>
+
+          <div class="metric-grid compact">
+<div class="metric-card"><span>Zona Kerawanan</span><strong id="homeZonaCount">—</strong></div>
+        <div class="metric-card"><span>Segmen Batas</span><strong id="homeBatasCount">—</strong></div>
+   <div class="metric-card"><span>Titik Evakuasi</span><strong id="homeEvakuasiCount">—</strong></div>
+       <div class="metric-card"><span>Pemukiman</span><strong id="homePemukimanCount">—</strong></div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ============ MAP VIEW ============ -->
+    <section id="mapView" class="screen screen-map">
+      <div class="map-layout">
+
+        <aside id="controlDock" class="control-dock">
+
+     <div class="dock-block nav-block">
+            <span class="mini-label">Navigasi &amp; Rute</span>
+   <h3>Pencarian Lokasi</h3>
+            <div class="search-wrap">
+   <div class="search-row">
+       <input id="searchInput" type="text" placeholder="Cari titik evakuasi / desa..." autocomplete="off" />
+      <button id="btnSearch" title="Cari">Cari</button>
+              </div>
+       <ul id="searchSuggestions" class="search-suggestions" hidden></ul>
+         </div>
+            <button id="btnLocate" class="action-btn">Deteksi Lokasi Saya</button>
+            <button id="btnNearestEvac" class="danger-btn">Rute Motor ke Evakuasi Terdekat</button>
+   <p id="locationText" class="dock-hint">Lokasi belum terdeteksi.</p>
+       </div>
+
+   <div class="dock-block layer-block">
+      <div class="dock-title">
+  <div>
+    <span class="mini-label">Layer Spasial</span>
+       <h3>Manajemen Layer</h3>
+              </div>
+              <button id="btnFitData" class="reset-btn" title="Pas ke seluruh data">Fit</button>
+     </div>
+            <div id="layerControl" class="layer-control"></div>
+          </div>
+
+          <div class="dock-block legend-block">
+          <span class="mini-label">Legenda</span>
+     <div class="legend-grid">
+            <span><i class="lg safevery"></i>Sangat Aman</span>
+      <span><i class="lg safe"></i>Aman</span>
+            <span><i class="lg mid"></i>Sedang</span>
+      <span><i class="lg high"></i>Rawan</span>
+              <span><i class="lg very"></i>Sangat Rawan</span>
+            <span><i class="lg border"></i>Batas Administrasi</span>
+    <span><i class="lg evac"></i>Titik Evakuasi</span>
+  <span><i class="lg route"></i>Rute Evakuasi</span>
+     <span><i class="lg settlement"></i>Pemukiman Terdampak</span>
+            </div>
+  </div>
+
+ </aside>
+
+        <button id="btnToggleSidebar" class="sidebar-toggle-btn" title="Lipat panel">
+   <span class="toggle-icon">‹</span>
+   </button>
+
+        <main class="map-stage">
+    <div id="map"></div>
+
+    <div class="map-command">
+            <button id="btnClearRoute">Hapus Rute</button>
+          <button id="btnResetView">Reset Tampilan</button>
+       <select id="basemapSelect" title="Ganti basemap">
+              <option value="dark">Gelap</option>
+              <option value="osm">OpenStreetMap</option>
+       <option value="satellite">Citra Satelit</option>
+          <option value="terrain">Topografi</option>
+   </select>
+          </div>
+
+ <div id="mapStatus" class="map-status">
+       <strong>Memuat data</strong>
+       <span>Membaca GeoJSON asli...</span>
+  </div>
+        </main>
+
+      </div>
+    </section>
+
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>
