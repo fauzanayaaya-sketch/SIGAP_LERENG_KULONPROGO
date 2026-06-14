@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SIGAP Lereng — WebGIS Kerawanan Longsor Kulon Progo</title>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="identity">
+          <div class="identity-mark">
+            <span>SL</span>
+            <span class="ping"></span>
+          </div>
+          <div>
+            <h1>SIGAP Lereng</h1>
+            <p>WebGIS Kerawanan Longsor</p>
+          </div>
+        </div>
+
+        <nav class="view-switch">
+          <button class="view-btn active" data-view="homeView">Beranda</button>
+          <button class="view-btn" data-view="mapView">Peta</button>
+        </nav>
+
+        <div class="header-actions">
+          <!-- Tombol admin tersembunyi: hanya pemilik website yang tahu -->
+          <button
+            id="btnAdminTrigger"
+            class="admin-trigger-btn"
+            onclick="toggleAdminMode()"
+            title=""
+          >
+            &#128274;
+          </button>
+          <button id="btnHeaderLocate" class="ghost-btn">Deteksi Lokasi</button>
+          <button class="primary-btn small" data-view-jump="mapView">
+            Buka Peta
+          </button>
+        </div>
+      </header>
+
+      <section id="homeView" class="screen screen-home active">
+        <div class="home-grid">
+          <article class="home-copy kulon-copy">
+            <div class="status-pill">
+              <i></i> Fokus kajian: kawasan perbukitan Menoreh
+            </div>
+            <h2>Pemetaan Kerawanan Longsor <span>Kulon Progo</span></h2>
+            <p>
+              Sistem ini disusun untuk membantu identifikasi zona rawan longsor,
+              sebaran pemukiman terdampak, serta titik evakuasi terdekat di
+              Kabupaten Kulon Progo, Daerah Istimewa Yogyakarta.
+            </p>
+
+            <div class="focus-list">
+              <div>
+                <b>Girimulyo</b
+                ><span>Topografi curam, kepadatan retakan tinggi.</span>
+              </div>
+              <div>
+                <b>Samigaluh</b
+                ><span>Lereng atas Menoreh, curah hujan tinggi.</span>
+              </div>
+              <div>
+                <b>Kalibawang</b
+                ><span>Pemukiman di kaki lereng sepanjang sungai.</span>
+              </div>
+            </div>
+
+            <div class="home-actions">
+              <button class="primary-btn" data-view-jump="mapView">
+                Mulai Eksplorasi Peta
+              </button>
+              <button id="btnHomeSearchSample" class="ghost-btn">
+                Cari Titik Evakuasi
+              </button>
+            </div>
+          </article>
+
+          <aside class="overview-card kulon-overview">
+            <div class="overview-top">
+              <div>
+                <span class="mini-label">Ringkasan Wilayah</span>
+                <h3>Kabupaten Kulon Progo</h3>
+              </div>
+              <div class="live-dot" title="Data aktif"></div>
+            </div>
+
+            <div class="hazard-image-card">
+              <img
+                src="assets/kerawanan_kulonprogo.png"
+                alt="Peta kerawanan Kulon Progo"
+              />
+              <div class="image-caption">
+                <b>Peta Indeks Kerawanan</b>
+                <span>Sumber: data spasial olahan</span>
+              </div>
+            </div>
+
+            <div class="priority-card">
+              <span class="mini-label">Kecamatan Prioritas</span>
+              <div class="priority-tags">
+                <b>Girimulyo</b><b>Samigaluh</b><b>Kalibawang</b>
+              </div>
+              <p>
+                Penanganan diarahkan pada zona sangat rawan dan pemukiman dampak
+                tinggi.
+              </p>
+            </div>
+
+            <div class="metric-grid compact">
+              <div class="metric-card">
+                <span>Zona Kerawanan</span><strong id="homeZonaCount">—</strong>
+              </div>
+              <div class="metric-card">
+                <span>Segmen Batas</span><strong id="homeBatasCount">—</strong>
+              </div>
+              <div class="metric-card">
+                <span>Titik Evakuasi</span
+                ><strong id="homeEvakuasiCount">—</strong>
+              </div>
+              <div class="metric-card">
+                <span>Pemukiman</span><strong id="homePemukimanCount">—</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="home-section">
+          <div class="section-header">
+            <span class="mini-label">Informasi Terkini</span>
+            <h2>Berita Bencana & Pengumuman</h2>
+          </div>
+          <div class="news-grid">
+            <article class="news-card">
+              <img
+                src="assets/foto-berita1.jpg"
+                alt="Longsor Girimulyo"
+                class="news-img"
+              />
+              <span class="date">28 / 3 /2025</span>
+              <h4>Longsor Jebol Rumah di Girimulyo</h4>
+              <p>
+                Tanah longsor terjadi di Dusun Sidi, Girimulyo saat hujan lebat,
+                menimpa seorang warga hingga tertimbun material selama kurang
+                lebih satu jam....
+              </p>
+              <a
+                href="https://www.detik.com/jogja/berita/d-7846952/longsor-jebol-rumah-di-kulon-progo-1-orang-tertimbun-sejam"
+                class="read-more"
+                >Baca selengkapnya <span>→</span></a
+              >
+            </article>
+            <article class="news-card">
+              <img
+                src="assets/foto-berita2.jpg"
+                alt="Longsor Kokap"
+                class="news-img"
+              />
+              <span class="date">27 / 2 / 2026</span>
+              <h4>Tebing Longsor Tutup Jalan Kokap</h4>
+              <p>
+                Hujan intensitas tinggi memicu longsornya tebing di Padukuhan
+                Crangah, Kokap, yang menutup sebagian badan jalan provinsi dan
+                mengancam rumah warga...
+              </p>
+              <a
+                href="https://www.detik.com/jogja/berita/d-8376028/tebing-longsor-tutup-jalan-kokap-kulon-progo-1-rumah-terancam"
+                class="read-more"
+                >Baca selengkapnya <span>→</span></a
+              >
+            </article>
+            <article class="news-card">
+              <img
+                src="assets/foto-berita3.jpg"
+                alt="Longsor Samigaluh"
+                class="news-img"
+              />
+              <span class="date">4 / 1 / 2024</span>
+              <h4>Tebing 25 Meter Longsor di Samigaluh</h4>
+              <p>
+                Tebing di Pedukuhan Clumprit, Gerbosari longsor dan merusak enam
+                rumah warga serta menyeret sebuah mobil....
+              </p>
+              <a
+                href="https://regional.kompas.com/read/2024/01/05/044100678/longsor-di-kulon-progo-satu-rumah-jebol-dan-belasan-warga-mengungsi"
+                class="read-more"
+                >Baca selengkapnya <span>→</span></a
+              >
+            </article>
+          </div>
+        </div>
+
+        <div class="home-section">
+          <div class="section-header">
+            <span class="mini-label">Dokumentasi Lapangan</span>
+            <h2>Galeri Foto Bencana</h2>
+          </div>
+          <div class="gallery-grid">
+            <div class="gallery-item">
+              <img src="assets/foto1.jpg" alt="Dokumentasi Longsor 1" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto2.jpg" alt="Dokumentasi Longsor 2" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto3.jpg" alt="Dokumentasi Longsor 3" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto4.jpg" alt="Dokumentasi Longsor 4" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto5.jpg" alt="Dokumentasi Longsor 5" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto6.jpg" alt="Dokumentasi Longsor 6" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto7.jpg" alt="Dokumentasi Longsor 7" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto8.jpg" alt="Dokumentasi Longsor 8" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto9.jpg" alt="Dokumentasi Longsor 9" />
+            </div>
+            <div class="gallery-item">
+              <img src="assets/foto10.jpg" alt="Dokumentasi Longsor 10" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAMBAHAN: SEKSI PEMBUAT WEBSITE -->
+        <!-- ========================================== -->
+        <div class="home-section">
+          <div class="section-header">
+            <span class="mini-label">Tim Pengembang</span>
+            <h2>Pembuat Website</h2>
+          </div>
+          <div class="creators-grid">
+            <div class="creator-card">
+              <img
+                src="assets/foto-fauzan.jpg"
+                alt="Fauzan Arif Hidayat"
+                class="creator-img"
+              />
+              <span class="creator-name">Fauzan Arif Hidayat</span>
+            </div>
+            <div class="creator-card">
+              <img
+                src="assets/foto-ellen.jpeg"
+                alt="Gading Putra Prasetyo"
+                class="creator-img"
+              />
+              <span class="creator-name">Ellen Freyjauza Levina Aronacaya</span>
+            </div>
+            <div class="creator-card">
+              <img
+                src="assets/foto-arzaq.jpeg"
+                alt="Fiqi"
+                class="creator-img"
+              />
+              <span class="creator-name">Arzaq Dhuha Abdullah</span>
+            </div>
+            <div class="creator-card">
+              <img
+                src="assets/foto-dana.jpeg"
+                alt="Nama Anggota 4"
+                class="creator-img"
+              />
+              <span class="creator-name">Ahmad Adi Pradana</span>
+            </div>
+            <div class="creator-card">
+              <img
+                src="assets/foto-atiqoh.jpeg"
+                alt="Nama Anggota 5"
+                class="creator-img"
+              />
+              <span class="creator-name">Tuhfatul Atiqoh</span>
+            </div>
+          </div>
+        </div>
+
+        <footer class="home-footer">
+          <div class="footer-content">
+            <div class="footer-brand">
+              <h3>SIGAP Lereng</h3>
+              <p>
+                WebGIS Pemetaan Kerawanan Longsor<br />Kabupaten Kulon Progo,
+                D.I. Yogyakarta
+              </p>
+            </div>
+            <div class="footer-contact">
+              <h4>Hubungi Kami</h4>
+              <p>Email: Fauzanayaaya@gmail.com</p>
+              <p>Telp / Darurat: (0274) 773311</p>
+              <p>
+                Alamat: Jalan Sugiman, Area Sawah, Kelurahan Pengasih, Kecamatan
+                Pengasih, Kabupaten Kulon Progo, Daerah Istimewa Yogyakarta.
+              </p>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>&copy; 2026 SIGAP Lereng. Hak Cipta Dilindungi.</p>
+          </div>
+        </footer>
+      </section>
+
+      <section id="mapView" class="screen screen-map">
+        <div class="map-layout">
+          <aside id="controlDock" class="control-dock">
+            <div class="dock-block nav-block">
+              <span class="mini-label">Navigasi &amp; Rute</span>
+              <h3>Pencarian Lokasi</h3>
+              <div class="search-wrap">
+                <div class="search-row">
+                  <input
+                    id="searchInput"
+                    type="text"
+                    placeholder="Cari titik evakuasi / desa..."
+                    autocomplete="off"
+                  />
+                  <button id="btnSearch" title="Cari">Cari</button>
+                </div>
+                <ul
+                  id="searchSuggestions"
+                  class="search-suggestions"
+                  hidden
+                ></ul>
+              </div>
+              <button id="btnLocate" class="action-btn">
+                Deteksi Lokasi Saya
+              </button>
+              <button id="btnNearestEvac" class="danger-btn">
+                Rute ke Evakuasi Terdekat
+              </button>
+              <p id="locationText" class="dock-hint">
+                Lokasi belum terdeteksi.
+              </p>
+            </div>
+
+            <!-- ===== LAPORAN WARGA block ===== -->
+            <div class="dock-block laporan-block">
+              <div class="dock-title">
+                <div>
+                  <span class="mini-label">Live · Real-time</span>
+                  <h3>
+                    Laporan Warga
+                    <span
+                      id="laporanBadge"
+                      class="laporan-badge"
+                      style="display: none"
+                      >0</span
+                    >
+                  </h3>
+                </div>
+                <button
+                  class="laporan-trigger-btn"
+                  onclick="openLaporanModal()"
+                >
+                  + Lapor
+                </button>
+              </div>
+              <ul id="laporanList" class="laporan-list">
+                <li class="laporan-empty">Menghubungkan…</li>
+              </ul>
+            </div>
+
+            <div class="dock-block layer-block">
+              <div class="dock-title">
+                <div>
+                  <span class="mini-label">Layer Spasial</span>
+                  <h3>Manajemen Layer</h3>
+                </div>
+                <button
+                  id="btnFitData"
+                  class="reset-btn"
+                  title="Pas ke seluruh data"
+                >
+                  Fit
+                </button>
+              </div>
+              <div id="layerControl" class="layer-control"></div>
+            </div>
+
+            <div class="dock-block legend-block">
+              <span class="mini-label">Legenda</span>
+              <div class="legend-grid">
+                <span><i class="lg safevery"></i>Sangat Aman</span>
+                <span><i class="lg safe"></i>Aman</span>
+                <span><i class="lg mid"></i>Sedang</span>
+                <span><i class="lg high"></i>Rawan</span>
+                <span><i class="lg very"></i>Sangat Rawan</span>
+                <span><i class="lg evac"></i>Titik Evakuasi</span>
+                <span><i class="lg route"></i>Rute Evakuasi</span>
+                <span><i class="lg settlement"></i>Pemukiman Terdampak</span>
+              </div>
+              <div class="legend-admin-section">
+                <span
+                  class="mini-label"
+                  style="margin-top: 10px; display: block"
+                  >Batas Kecamatan</span
+                >
+                <div class="legend-admin-items">
+                  <span
+                    ><i
+                      class="lg lg-admin"
+                      style="
+                        border-color: #f59e0b;
+                        background: rgba(245, 158, 11, 0.18);
+                      "
+                    ></i
+                    >Girimulyo</span
+                  >
+                  <span
+                    ><i
+                      class="lg lg-admin"
+                      style="
+                        border-color: #06b6d4;
+                        background: rgba(6, 182, 212, 0.18);
+                      "
+                    ></i
+                    >Kalibawang</span
+                  >
+                  <span
+                    ><i
+                      class="lg lg-admin"
+                      style="
+                        border-color: #a855f7;
+                        background: rgba(168, 85, 247, 0.18);
+                      "
+                    ></i
+                    >Samigaluh</span
+                  >
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <button
+            id="btnToggleSidebar"
+            class="sidebar-toggle-btn"
+            title="Lipat panel"
+          >
+            <span class="toggle-icon">‹</span>
+          </button>
+
+          <main class="map-stage">
+            <div id="map"></div>
+
+            <!-- Legenda Batas Administrasi (overlay di map-stage) -->
+            <div id="adminLegend" class="admin-legend-overlay">
+              <!-- Diisi oleh JS: buildAdminLegend() -->
+            </div>
+
+            <div class="map-command">
+              <button
+                id="btnLaporkan"
+                class="laporan-map-btn"
+                onclick="openLaporanModal()"
+              >
+                🚨 Laporkan
+              </button>
+              <button id="btnClearRoute">Hapus Rute</button>
+              <button id="btnResetView">Reset Tampilan</button>
+              <div class="basemap-dropdown" id="basemapDropdown">
+                <button
+                  class="basemap-trigger"
+                  id="basemapTrigger"
+                  title="Ganti basemap"
+                >
+                  <span class="basemap-icon">🌑</span>
+                  <span class="basemap-label" id="basemapLabel">Gelap</span>
+                  <span class="basemap-arrow">▾</span>
+                </button>
+                <ul class="basemap-menu" id="basemapMenu" hidden>
+                  <li data-value="dark" data-icon="🌑">Gelap</li>
+                  <li data-value="osm" data-icon="🗺️">OpenStreetMap</li>
+                  <li data-value="satellite" data-icon="🛰️">Citra Satelit</li>
+                  <li data-value="terrain" data-icon="⛰️">Topografi</li>
+                </ul>
+              </div>
+            </div>
+
+            <div id="mapStatus" class="map-status">
+              <strong>Memuat data</strong>
+              <span>Membaca GeoJSON asli...</span>
+            </div>
+          </main>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============================================================
+         MODAL LAPORAN WARGA
+         ============================================================ -->
+    <div
+      id="laporanModal"
+      class="laporan-modal-overlay"
+      onclick="if (event.target === this) closeLaporanModal();"
+    >
+      <div class="laporan-modal-card">
+        <div class="laporan-modal-head">
+          <div class="laporan-modal-title">
+            <span class="laporan-modal-icon">🚨</span>
+            <div>
+              <h3>Laporkan Bencana</h3>
+              <p>Laporan tampil real-time di peta semua pengguna</p>
+            </div>
+          </div>
+          <button
+            class="laporan-close-btn"
+            onclick="closeLaporanModal()"
+            title="Tutup"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Lokasi -->
+        <div class="laporan-field">
+          <label>Lokasi Kejadian <span class="laporan-req">*</span></label>
+          <div class="laporan-loc-box">
+            <span id="laporLokasiText" class="laporan-loc-text"
+              >Belum dipilih</span
+            >
+            <div class="laporan-loc-actions">
+              <!-- <button class="laporan-loc-btn" onclick="startMapPick()">📍 Klik Peta</button> -->
+              <button
+                id="btnLaporGPS"
+                class="laporan-loc-btn"
+                onclick="useGPSForLaporan()"
+              >
+                📡 GPS
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Jenis Bencana -->
+        <div class="laporan-field">
+          <label for="laporJenis">Jenis Bencana</label>
+          <select id="laporJenis" class="laporan-select">
+            <option value="Longsor">⚠️ Longsor</option>
+            <option value="Tanah Retak">⚡ Tanah Retak</option>
+            <option value="Banjir">💧 Banjir</option>
+            <option value="Pohon Tumbang">🌳 Pohon Tumbang</option>
+            <option value="Lainnya">📍 Lainnya</option>
+          </select>
+        </div>
+
+        <!-- Deskripsi -->
+        <div class="laporan-field">
+          <label for="laporDeskripsi"
+            >Deskripsi <span class="laporan-opt">(opsional)</span></label
+          >
+          <textarea
+            id="laporDeskripsi"
+            class="laporan-textarea"
+            placeholder="Jelaskan situasi kejadian secara singkat..."
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Nama -->
+        <div class="laporan-field">
+          <label for="laporNama"
+            >Nama Pelapor <span class="laporan-opt">(opsional)</span></label
+          >
+          <input
+            id="laporNama"
+            type="text"
+            class="laporan-input"
+            placeholder="Anonim"
+          />
+        </div>
+
+        <button
+          id="btnSubmitLaporan"
+          class="laporan-submit-btn"
+          onclick="submitLaporan()"
+        >
+          Kirim Laporan
+        </button>
+      </div>
+    </div>
+
+    <!-- Hint overlay saat mode klik peta -->
+    <div id="laporPickHint" class="laporan-pick-hint" hidden>
+      <div class="pick-hint-inner">
+        <span class="pick-hint-pulse"></span>
+        <span>📍 Klik lokasi kejadian di peta</span>
+        <button onclick="cancelMapPick()">Batal</button>
+      </div>
+    </div>
+
+    <!-- Toast notifikasi -->
+    <div id="laporanToast" class="laporan-toast"></div>
+
+    <!-- ============================================================
+         MODAL ADMIN LOGIN
+         ============================================================ -->
+    <div
+      id="adminModal"
+      class="admin-modal-overlay"
+      onclick="if (event.target === this) closeAdminModal();"
+    >
+      <div class="admin-modal-card" id="adminModalCard">
+        <div class="admin-modal-head">
+          <span class="admin-modal-icon">🔐</span>
+          <div>
+            <h3>Admin Panel</h3>
+            <p>SIGAP Lereng — Akses Terbatas</p>
+          </div>
+        </div>
+
+        <div class="admin-field">
+          <label for="adminUser">Username</label>
+          <input
+            id="adminUser"
+            type="text"
+            class="admin-input"
+            placeholder="Masukkan username"
+            autocomplete="off"
+            onkeydown="
+              if (event.key === 'Enter')
+                document.getElementById('adminPass').focus();
+            "
+          />
+        </div>
+
+        <div class="admin-field">
+          <label for="adminPass">Password</label>
+          <input
+            id="adminPass"
+            type="password"
+            class="admin-input"
+            placeholder="Masukkan password"
+            autocomplete="off"
+            onkeydown="if (event.key === 'Enter') tryAdminLogin();"
+          />
+        </div>
+
+        <p id="adminLoginErr" class="admin-err" hidden>
+          ⚠️ Username atau password salah. Coba lagi.
+        </p>
+
+        <div class="admin-actions">
+          <button class="admin-cancel-btn" onclick="closeAdminModal()">
+            Batal
+          </button>
+          <button class="admin-login-btn" onclick="tryAdminLogin()">
+            Masuk
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.js"></script>
+    <!-- Firebase v9 compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/laporan.js"></script>
+    <script src="js/script.js"></script>
+  </body>
+</html>
